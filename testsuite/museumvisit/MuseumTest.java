@@ -19,18 +19,19 @@ public class MuseumTest {
     Museum museum = Museum.buildSimpleMuseum();
     assertTrue(museum.getEntrance() instanceof Entrance);
     assertTrue(museum.getExit() instanceof Exit);
+    museum.getEntrance().enter();
 
     assertTrue(museum.getEntrance().getExitTurnstiles().size() == 1);
-    assertTrue(museum.getEntrance().getExitTurnstiles().get(0)
-        .getDestinationRoom() instanceof ExhibitionRoom);
+    assertTrue(
+        museum.getEntrance().getExitTurnstiles().get(0).getDestinationRoom()
+            instanceof ExhibitionRoom);
 
     Optional<MuseumSite> exitSite =
         museum.getEntrance().getExitTurnstiles().get(0).passToNextRoom();
     assertTrue(((ExhibitionRoom) exitSite.get()).getCapacity() == 10);
 
     assertTrue(exitSite.get().getExitTurnstiles().size() == 1);
-    assertTrue(exitSite.get().getExitTurnstiles().get(0)
-        .getDestinationRoom() instanceof Exit);
+    assertTrue(exitSite.get().getExitTurnstiles().get(0).getDestinationRoom() instanceof Exit);
     assertTrue(museum.getExit().getExitTurnstiles().isEmpty());
   }
 
@@ -39,10 +40,12 @@ public class MuseumTest {
     Museum museum = Museum.buildLoopyMuseum();
     assertTrue(museum.getEntrance() instanceof Entrance);
     assertTrue(museum.getExit() instanceof Exit);
+    museum.getEntrance().enter(); // addition
 
     assertTrue(museum.getEntrance().getExitTurnstiles().size() == 1);
-    assertTrue(museum.getEntrance().getExitTurnstiles().get(0)
-        .getDestinationRoom() instanceof ExhibitionRoom);
+    assertTrue(
+        museum.getEntrance().getExitTurnstiles().get(0).getDestinationRoom()
+            instanceof ExhibitionRoom);
 
     Optional<MuseumSite> venomExhibitionRoom =
         museum.getEntrance().getExitTurnstiles().get(0).passToNextRoom();
@@ -56,8 +59,8 @@ public class MuseumTest {
     venomExhibitionRoom.get().enter();
     Optional<MuseumSite> whalesExhibitionRoom;
     Optional<MuseumSite> exitSite;
-    if (venomExhibitionRoom.get().getExitTurnstiles().get(0).passToNextRoom()
-        .get() instanceof ExhibitionRoom) {
+    if (venomExhibitionRoom.get().getExitTurnstiles().get(0).passToNextRoom().get()
+        instanceof ExhibitionRoom) {
       whalesExhibitionRoom = venomExhibitionRoom.get().getExitTurnstiles().get(0).passToNextRoom();
       exitSite = venomExhibitionRoom.get().getExitTurnstiles().get(1).passToNextRoom();
     } else {
@@ -67,8 +70,9 @@ public class MuseumTest {
     assertTrue(whalesExhibitionRoom.get().getExitTurnstiles().size() == 1);
     assertTrue(((ExhibitionRoom) whalesExhibitionRoom.get()).getCapacity() == 10);
 
-    assertTrue(whalesExhibitionRoom.get().getExitTurnstiles().get(0)
-        .getDestinationRoom() instanceof ExhibitionRoom);
+    assertTrue(
+        whalesExhibitionRoom.get().getExitTurnstiles().get(0).getDestinationRoom()
+            instanceof ExhibitionRoom);
     assertTrue(exitSite.get() instanceof Exit);
     assertTrue(museum.getExit().getExitTurnstiles().isEmpty());
   }
@@ -89,42 +93,82 @@ public class MuseumTest {
   public void aVisitToTheLoopyMuseumMostLikelyTerminates() {
     final Museum museum = Museum.buildLoopyMuseum();
     aVisitMostLikelyTerminates(museum);
+}
+
+  @Test
+  public void consistencySimpleMuseum() {
+    final int runs = 10;
+    int fails = 0;
+    for (int run = 1; run <= runs; run++) {
+      System.out.println("Run: " + run);
+      try {
+        aVisitToTheSimpleMuseumMostLikelyTerminates();
+      }
+      catch (Exception e) {
+        fails += 1;
+      }
+      System.out.println("Finished run: " + run + "\n");
+    }
+    System.out.println("For a total of " + runs + " runs, the visit to a Simple Museum terminated " + (runs - fails) + " times.");
+    assertEquals(0, fails);
+  }
+
+
+  @Test
+  public void consistencyLoopyMuseum() {
+    final int runs = 10;
+    int fails = 0;
+    for (int run = 1; run <= runs; run++) {
+      System.out.println("Run: " + run);
+      try {
+        aVisitToTheLoopyMuseumMostLikelyTerminates();
+      }
+      catch (Exception e) {
+        fails += 1;
+        System.out.println("UNSUCCESSFUL RUN: " + run + "\n");
+      }
+      System.out.println("Finished run: " + run + "\n");
+    }
+    System.out.println("For a total of " + runs + " runs, the visit to a Loopy Museum terminated successfully " + (runs - fails) + " time(s).");
+    assertEquals(0, fails);
   }
 
   private void aVisitMostLikelyTerminates(Museum museum) {
-    final int numberOfVisitors = 50;
+    final int numberOfVisitors = 10;
 
     List<Thread> visitors = new ArrayList<>();
-    IntStream.range(0, numberOfVisitors).sequential().forEach(i -> {
-      Thread visitorThread =
-          new Thread(new Visitor("Vis" + i, museum.getEntrance()));
-      visitors.add(visitorThread);
-      visitorThread.start();
-    });
+    IntStream.range(0, numberOfVisitors)
+        .sequential()
+        .forEach(
+            i -> {
+              Thread visitorThread = new Thread(new Visitor("Vis" + i, museum.getEntrance()));
+              visitors.add(visitorThread);
+              visitorThread.start();
+            });
 
-    // Wait for all visitors to complete their visit
-    visitors.forEach(v -> {
-      try {
-        v.join();
-      } catch (InterruptedException e) {
-      }
-    });
+    // Wait for all visitors to complete their visit.
+    visitors.forEach(
+        v -> {
+          try {
+            v.join();
+          } catch (InterruptedException e) {
+          }
+        });
 
-    Set<MuseumSite> reachableSitesFromEntrance =
-        reachableSitesFrom(museum.getEntrance());
-    reachableSitesFromEntrance.stream().forEach(room -> {
-      if (room.equals(museum.getExit())) {
-        assertEquals(numberOfVisitors, room.getOccupancy());
-      } else {
-        assertEquals(0, room.getOccupancy());
-      }
-    });
-
+    Set<MuseumSite> reachableSitesFromEntrance = reachableSitesFrom(museum.getEntrance());
+    reachableSitesFromEntrance.stream()
+        .forEach(
+            room -> {
+              if (room.equals(museum.getExit())) {
+                assertEquals(numberOfVisitors, room.getOccupancy());
+              } else {
+                assertEquals(0, room.getOccupancy());
+              }
+            });
   }
 
   private void theTopologyIsConnected(Museum museum) {
-    Set<MuseumSite> reachableFromEntrance =
-        reachableSitesFrom(museum.getEntrance());
+    Set<MuseumSite> reachableFromEntrance = reachableSitesFrom(museum.getEntrance());
 
     for (MuseumSite reachableSite : reachableFromEntrance) {
       assertTrue(reachableSitesFrom(reachableSite).contains(museum.getExit()));
@@ -140,7 +184,8 @@ public class MuseumTest {
       final MuseumSite nextSiteToExplore = sitesStillToExplore.get(0);
       List<MuseumSite> newReachableRooms =
           nextSiteToExplore.getExitTurnstiles().stream()
-              .map(t -> t.getDestinationRoom()).collect(Collectors.toList());
+              .map(t -> t.getDestinationRoom())
+              .collect(Collectors.toList());
 
       List<MuseumSite> newReachableRoomsNotExploredYet =
           newReachableRooms.stream()
