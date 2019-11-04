@@ -19,6 +19,10 @@ As there is no time limit and choice of rooms to visit next is randomised withou
 2. Have a "bias" for each thread which influences their choice of rooms towards rooms they have yet to visit, where visits are less frequent and away from rooms that are visited consistently.
 3. Prevent cyclic visits and introduce a "one-direction tour" that has a single deterministic path between entrance and exit.
 
+Example: Loopy Museum layout
+
+![Loopy Museum layout](doc/MuseumDiagram.png)
+
 ----
 
 To further extend this program one can expand on the current model to simulate an actual museum, adding "attractiveness" in each ExhibitionRoom which influences room choice, operating hours and incidents. With the addition of statistical analysis of thread behaviour, room frequency and average time spent in each room (and more), the simulation can be used to analyse possible behaviours of people in current/renovated/planned museums.
